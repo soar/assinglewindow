@@ -1,0 +1,9 @@
+
+# Ignore all subfolders
+*/*
+
+# Not ignore GIT-stuff
+!.git/*
+!.gitignore
+
+# eof
