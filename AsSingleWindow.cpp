@@ -1,56 +1,9 @@
-
-//#define _MT
-//#define WIN32_LEAN_AND_MEAN
-
-#include <windows.h>
-
-#include <newpluginapi.h>
-#include <m_system.h>
-//#include <m_langpack.h>
-#include <m_database.h>
-#include <m_message.h>
-#include <m_clist.h>
-#include <m_clui.h>
-
-HINSTANCE hInst;
-PLUGINLINK *pluginLink;
-
-bool IsUpdateInProgress;
-
-HANDLE hookModulesLoaded;
-HANDLE hookMsgWindow;
-
-HWND hWndCListWindow;
-HWND hWndMsgWindow;
-
-WNDPROC oldCListWindowProc;
-WNDPROC oldMsgWindowProc;
-
-PLUGININFOEX pluginInfo = {
-    sizeof(PLUGININFOEX),
-#ifdef UNICODE
-    "AsSingleWindow Mode Plugin (Unicode)",
-#else
-    "AsSingleWindow Mode Plugin",
-#endif
-    PLUGIN_MAKE_VERSION(0, 0, 0, 4),
-    "Allow you work with contact-list and chat windows as with one single window.",
-    "Aleksey Smyrnov aka Soar",
-    "to-me@soar.name",
-    "© 2010 http://soar.name",
-    "http://soar.name/",
-    UNICODE_AWARE,
-    0,
-#ifdef UNICODE
-    {0xF6C73B4, 0x2B2B, 0x711D, {0xFB, 0xB6, 0xBB, 0x26, 0x7D, 0xFD, 0x72, 0x08}}, // 0xF6C73B42B2B711DFBB6BB267DFD7208
-#else
-    {0xF6C73B4, 0x2B2B, 0x711D, {0xFB, 0xB6, 0xBB, 0x26, 0x7D, 0xFD, 0x72, 0x09}}, // 0xF6C73B42B2B711DFBB6BB267DFD7209
-#endif
-};
+#include "AsSingleWindow.h"
 
 int OnModulesLoaded(WPARAM wParam, LPARAM lParam);
 int MsgWindowEvent(WPARAM wParam, LPARAM lParam);
 int MsgWindowGetData(WPARAM wParam, LPARAM lParam);
+
 LRESULT CALLBACK CListWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK MsgWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -156,23 +109,93 @@ void SyncMoveTwoWindows(HWND hWndSrc, HWND hWndDst, bool IsSrcCL)
     w = rWndDst.right - rWndDst.left;
     h = rWndSrc.bottom - rWndSrc.top;
 
-    //MoveWindow(hWndDst, x, y, w, h, true);
-    //ShowWindow(hWndDst, SW_SHOW);
     SetWindowPos(hWndDst, hWndSrc, x, y, w, h, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 }
 
 void SyncActivateSecondWindow(HWND hWndSrc, HWND hWndDst, bool bNeedShow)
 {
-    if ((hWndSrc == 0) || (hWndDst == 0))
+    if ((hWndSrc == NULL) || (hWndDst == NULL))
         return;
 
     //ShowWindow(hWndDst, IsShow ? SW_SHOW : SW_HIDE);
-    SetWindowPos(hWndDst, hWndSrc, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (IsShow ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
+    SetWindowPos(hWndDst, hWndSrc, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (bNeedShow ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
+}
+
+void ActivateCListWindow(HWND hWndSrc, HWND hWndDst, bool bNeedShow)
+{
+    cListActivations++;
+
+    if ((hWndSrc == NULL) || (hWndDst == NULL))
+        return;
+
+    /*
+    if (bNeedShow)
+    {
+        DBWriteContactSettingByte(NULL, "CList", "State", SETTING_STATE_NORMAL);
+        ShowWindow(hWndDst, SW_RESTORE);
+        SetWindowPos(hWndDst, hWndSrc, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
+        /*MoveWindow(hWndDst, rCListWindow.left, rCListWindow.top, 
+            rCListWindow.right - rCListWindow.left, 
+            rCListWindow.bottom - rCListWindow.top, true);*/
+    /*
+    }
+    else
+    {
+        //GetWindowRect(hWndDst, &rCListWindow);
+        /*
+        DBWriteContactSettingByte(NULL, "CList", "State", SETTING_STATE_HIDDEN);
+        ShowWindow(hWndSrc, SW_RESTORE);
+        ShowWindow(hWndDst, SW_RESTORE);
+        CallService(MS_CLIST_SHOWHIDE, 0, 0);
+        
+        MSG msg;
+        msg.hwnd = hWndDst;
+        msg.message = TIM_CALLBACK;
+        msg.lParam = WM_MBUTTONUP;
+
+        Shell_NotifyIconW
+
+        CallService(MS_CLIST_TRAYICONPROCESSMESSAGE, (WPARAM)(MSG*)&msg, 0);
+    //}
+    
+    /*
+    RECT rWndDst;
+    GetWindowRect(hWndDst, &rWndDst);
+
+    ShowWindow(hWndDst, bNeedShow ? SW_RESTORE : SW_MINIMIZE);
+    if (bNeedShow)
+        SetWindowPos(hWndDst, hWndSrc, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
+    */
+    
+    //CallService(MS_CLIST_SHOWHIDE, 0, 0);
+
+    /*
+    int test = DBGetContactSettingByte(NULL, "CList", "State", SETTING_STATE_NORMAL);
+    switch (test) {
+        case SETTING_STATE_NORMAL:
+            MessageBox(NULL, L"SETTING_STATE_NORMAL", L"CList State", MB_OK);
+            break;
+        case SETTING_STATE_MINIMIZED:
+            MessageBox(NULL, L"SETTING_STATE_MINIMIZED", L"CList State", MB_OK);
+            break;
+        case SETTING_STATE_HIDDEN:
+            MessageBox(NULL, L"SETTING_STATE_HIDDEN", L"CList State", MB_OK);
+            break;
+    }
+    */    
+}
+
+void ActivateMessageWindow(HWND hWndSrc, HWND hWndDst, bool bNeedShow)
+{
+    if ((hWndSrc == NULL) || (hWndDst == NULL))
+        return;
+
+    SetWindowPos(hWndDst, hWndSrc, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (bNeedShow ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
 }
 
 LRESULT CALLBACK CListWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if (!IsUpdateInProgress)
+    if (!IsUpdateInProgress && IsWindow(hWndMsgWindow))
     {
         IsUpdateInProgress = true;
 
@@ -182,7 +205,24 @@ LRESULT CALLBACK CListWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
                 SyncMoveTwoWindows(hWndCListWindow, hWndMsgWindow, true);
                 break;
             case WM_SHOWWINDOW:
-                SyncActivateSecondWindow(hWndCListWindow, hWndMsgWindow, wParam ? true : false);
+                //ActivateMessageWindow(hWndCListWindow, hWndMsgWindow, wParam ? true : false);
+                //SyncActivateSecondWindow(hWndCListWindow, hWndMsgWindow, wParam ? true : false);
+                break;
+            case TIM_CALLBACK:
+                if ((lParam == WM_RBUTTONDOWN) || (lParam == WM_LBUTTONDOWN))
+                {
+                    WINDOWPLACEMENT wp;
+                    GetWindowPlacement(hWndMsgWindow, &wp);                    
+                
+                    if (IsIconic(hWndMsgWindow))
+                    {
+                        ShowWindow(hWndMsgWindow, SW_SHOW);
+                        ShowWindow(hWndCListWindow, SW_SHOW);
+                        //MessageBox(NULL, L"done", L"TIM_CALLBACK", MB_OK);
+                        IsUpdateInProgress = false;
+                        return 0;
+                    }
+                }
                 break;
         }
 
@@ -203,11 +243,14 @@ LRESULT CALLBACK MsgWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
             case WM_MOVE:
                 SyncMoveTwoWindows(hWndMsgWindow, hWndCListWindow, false);
                 break;
+            // Активация окна по альт-таб
             case WM_SHOWWINDOW:
                 break;
+            // Активация по клику
             case WM_ACTIVATE:
                 if ((wParam == WA_ACTIVE) || (wParam == WA_CLICKACTIVE))
-                    SyncActivateSecondWindow(hWndMsgWindow, hWndCListWindow, true);
+                    ActivateCListWindow(hWndMsgWindow, hWndCListWindow, true);
+                    //SyncActivateSecondWindow(hWndMsgWindow, hWndCListWindow, true);
                 break;
         }
 
