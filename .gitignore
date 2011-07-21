@@ -1,6 +1,7 @@
 
 # Ignore all subfolders
 */*
+!src/*
 
 # Not ignore GIT-stuff
 !.git/*

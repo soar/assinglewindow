@@ -16,10 +16,44 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
+    <None Include="idd_asw_.bin">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AsSingleWindow.cpp">
+    <ClCompile Include="src\WindowsManager.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
+    <ClCompile Include="src\AsSingleWindow.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Options.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stdafx.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AsSingleWindow.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Options.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WindowsManager.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="optionsPage.rc">
+      <Filter>Файлы ресурсов</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
