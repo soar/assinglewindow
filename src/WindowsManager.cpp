@@ -128,6 +128,7 @@ void windowAdd(HWND hWnd, bool IsMain)
     windowSetStartPosition(hWnd);
 
     thisWindowInfo.hWnd = hWnd;
+    thisWindowInfo.eState = WINDOW_STATE_NORMAL;
     thisWindowInfo.pPrevWndProc = (WNDPROC) SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) wndProcSync);
     thisWindowInfo.saveRect();
     
@@ -144,7 +145,10 @@ void windowRemove(HWND hWnd)
 {
     windowsList::iterator itr = windowFindItr(hWnd);
     if (itr != pluginVars.allWindows.end())
+    {
+        SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) itr->pPrevWndProc);
         pluginVars.allWindows.erase(itr);
+    }
 }
 
 /**
@@ -193,18 +197,28 @@ void windowSetStartPosition(HWND hWnd)
  */
 void allWindowsMoveAndSize(HWND hWnd)
 {
+    if (windowFind(hWnd)->eState != WINDOW_STATE_NORMAL)
+        return;
+
     if (pluginIsAlreadyRunning())
         return;
     pluginSetProgress();
 
     RECT rWPC, rWPN;
     LONG cx, cy, cw, ch;
-    
+
     // Просмотр окон от текущего до конца
     windowsList::iterator itrC = windowFindItr(hWnd);
     windowsList::iterator itrN = ++windowFindItr(hWnd);
     for (; itrC != pluginVars.allWindows.end(), itrN != pluginVars.allWindows.end(); itrC++, itrN++)
     {
+        if (itrC->eState != WINDOW_STATE_NORMAL)
+            continue;
+
+        if (itrN->eState != WINDOW_STATE_NORMAL)
+            continue;
+
+        /*
         if (! GetWindowRect(itrC->hWnd, &rWPC) || ! GetWindowRect(itrN->hWnd, &rWPN))
             continue;
 
@@ -214,6 +228,12 @@ void allWindowsMoveAndSize(HWND hWnd)
         cy = rWPC.top;
 
         SetWindowPos(itrN->hWnd, itrC->hWnd, cx, cy, cw, ch, SWP_NOACTIVATE);
+        */
+
+        sWndCoords wndCoord;
+        calcNewWindowPosition(itrC->hWnd, itrN->hWnd, &wndCoord, WINDOW_POSITION_RIGHT);
+        SetWindowPos(itrN->hWnd, itrC->hWnd, wndCoord.x, wndCoord.y, wndCoord.width, wndCoord.height, SWP_NOACTIVATE);
+
         itrN->saveRect();
     }
 
@@ -222,6 +242,10 @@ void allWindowsMoveAndSize(HWND hWnd)
     windowsList::reverse_iterator ritrN = ++windowFindRevItr(hWnd);
     for (; ritrC != pluginVars.allWindows.rend(), ritrN != pluginVars.allWindows.rend(); ritrC++, ritrN++)
     {
+        if (ritrN->eState != WINDOW_STATE_NORMAL || ritrN->eState != WINDOW_STATE_NORMAL)
+            continue;
+
+        /*
         if (! GetWindowRect(ritrC->hWnd, &rWPC) || ! GetWindowRect(ritrN->hWnd, &rWPN))
             continue;
 
@@ -231,6 +255,12 @@ void allWindowsMoveAndSize(HWND hWnd)
         cy = rWPC.top;
 
         SetWindowPos(ritrN->hWnd, ritrC->hWnd, cx, cy, cw, ch, SWP_NOACTIVATE);
+        */
+
+        sWndCoords wndCoord;
+        calcNewWindowPosition(ritrC->hWnd, ritrN->hWnd, &wndCoord, WINDOW_POSITION_LEFT);
+        SetWindowPos(ritrN->hWnd, ritrC->hWnd, wndCoord.x, wndCoord.y, wndCoord.width, wndCoord.height, SWP_NOACTIVATE);
+
         ritrN->saveRect();
     }
 
@@ -238,107 +268,73 @@ void allWindowsMoveAndSize(HWND hWnd)
     pluginSetDone();
 }
 
-void windowChangeState(HWND hWnd)
+void windowChangeState(HWND hWnd, WPARAM cmd, LPARAM cursorCoords)
 {
-
+    if (sWindowInfo* wndInfo = windowFind(hWnd))
+    {
+        switch (cmd)
+        {
+            case SC_CLOSE:
+                wndInfo->eState = WINDOW_STATE_CLOSED;
+                break;
+            case SC_MAXIMIZE:
+                wndInfo->eState = WINDOW_STATE_MAXIMIZED;
+                break;
+            case SC_MINIMIZE:
+                wndInfo->eState = WINDOW_STATE_MINIMIZED;
+                break;
+            case SC_RESTORE:
+            case SC_MOVE:
+            case SC_SIZE:
+                wndInfo->eState = WINDOW_STATE_NORMAL;
+                break;
+        }
+    }
 }
 
 LRESULT CALLBACK wndProcSync(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
     {
-        case WM_SIZE:
-            if (wParam == SIZE_RESTORED)
-                allWindowsMoveAndSizeWithBase(hWnd);
-            break;
-        case WM_MOVE:
-            allWindowsMoveAndSizeWithBase(hWnd);
-            break;
-    }
-
-    if (sWindowInfo* wndInfo = windowFind(hWnd))
-        return CallWindowProc(wndInfo->pPrevWndProc, hWnd, msg, wParam, lParam);
-    else
-        return 0;
-}
-
-#pragma optimize ("", off)
-LRESULT CALLBACK debugWndCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    RECT rc;
-    GetWindowRect(hWnd, &rc);
-    UINT8 x, y, dx, dy;
-    x = rc.left;
-    y = rc.top;
-    dx = rc.right;
-    dy = rc.bottom;
-
-    UINT8 test = 0;
-
-    WINDOWPLACEMENT wndPlace;
-    wndPlace.length = sizeof(wndPlace);
-    GetWindowPlacement(hWnd, &wndPlace);
-
-    UINT sC = wndPlace.showCmd;
-    
-    switch (msg) 
-    {
         case WM_SYSCOMMAND:
-            test = 1;
-            break;
-        case WM_MOVE:
-            test = 2;
+            windowChangeState(hWnd, wParam, lParam);
             break;
         case WM_SIZE:
-            test = 3;
+            //if (wParam == SIZE_RESTORED)
+                allWindowsMoveAndSize(hWnd);
+            break;
+        case WM_MOVE:
+            allWindowsMoveAndSize(hWnd);
+            break;
+        case WM_SHOWWINDOW:
             break;
     }
-    
-    test++;
 
     if (sWindowInfo* wndInfo = windowFind(hWnd))
+    {
+        // closing - not realy closes
+        //if (wndInfo->eState == WINDOW_STATE_CLOSED)
+        //    windowRemove(hWnd);
         return CallWindowProc(wndInfo->pPrevWndProc, hWnd, msg, wParam, lParam);
+    }
     else
         return 0;
 }
 
-void debugColoring(HWND hWnd)
-{
-    HDC hdc;
-    hdc = GetWindowDC(hWnd);
-    RECT rct;
-    GetWindowRect(hWnd, &rct);
-    for (int i = 0; i < 10; i++)
-    {
-        FillRect(hdc, &rct, (HBRUSH) (GetSysColor(COLOR_WINDOWTEXT) + 1));
-        Sleep(100);
-        RedrawWindow(hWnd, NULL, NULL, RDW_ALLCHILDREN + RDW_UPDATENOW);
-        Sleep(100);
-    }
-}
-/*
-LONG calcNewWindowPosition(HWND hWndLeading, HWND hWndDriven, RECT* rc, eWindowPosition wndPos)
+void calcNewWindowPosition(HWND hWndLeading, HWND hWndDriven, sWndCoords* wndCoord, eWindowPosition wndPos)
 {
     RECT rWndLeading, rWndDriven;
 
-    if ((! GetWindowRect(hWndLeading, &rWndLeading)) || (! GetWindowRect(hWndDriven, &rWndDriven)))
-        return 0;
+    if (! GetWindowRect(hWndLeading, &rWndLeading) || ! GetWindowRect(hWndDriven, &rWndDriven))
+        return;
 
-    rc->bottom = rWndLeading.bottom;
-    rc->top = rWndLeading.top;
-
-    switch (wndPos)
-    {
-        case WINDOW_POSITION_RIGHT:
-            rc->left = rWndLeading.left - (rWndDriven.right - rWndDriven.left);
-            rc->right = rWndLeading.left;
-            return rc->left;
-        case WINDOW_POSITION_LEFT:
-            rc->left = rWndLeading.right;
-            rc->right = rWndLeading.right + (rWndDriven.right - rWndDriven.left);
-            return rc->right;
-    }
+    wndCoord->width = rWndDriven.right - rWndDriven.left;
+    wndCoord->height = rWndLeading.bottom - rWndLeading.top;
+    wndCoord->y = rWndLeading.top;
+    if (wndPos == WINDOW_POSITION_RIGHT)
+        wndCoord->x = rWndLeading.left - wndCoord->width;
+    else if (wndPos == WINDOW_POSITION_LEFT)
+        wndCoord->x = rWndLeading.right;
 }
-*/
 
 // end of file

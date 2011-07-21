@@ -8,15 +8,19 @@
 enum WindowState {
     WINDOW_STATE_NORMAL = 0,
     WINDOW_STATE_MINIMIZED = 1,
-    WINDOW_STATE_HIDDEN = 2,
+    WINDOW_STATE_MAXIMIZED = 2,
+    WINDOW_STATE_HIDDEN = 3,
+    WINDOW_STATE_CLOSED = 4, // not used ?
 };
 
-/*
 enum eWindowPosition {
     WINDOW_POSITION_LEFT = 1,
     WINDOW_POSITION_RIGHT = 2,
 };
-*/
+
+struct sWndCoords {
+    LONG x, y, width, height;
+};
 
 struct sWindowInfo {
     HWND hWnd;
@@ -44,15 +48,12 @@ HWND windowGetRoot(HWND);
 void windowSetStartPosition(HWND);
 
 // tools
+void calcNewWindowPosition(HWND, HWND, sWndCoords*, eWindowPosition);
 //LONG calcNewWindowPosition(HWND, HWND, RECT*, eWindowPosition);
 
 // window callbacks
 LRESULT CALLBACK wndProcSync(HWND, UINT, WPARAM, LPARAM);
 void allWindowsMoveAndSize(HWND);
-
-// debug
-LRESULT CALLBACK debugWndCallback(HWND, UINT, WPARAM, LPARAM);
-void debugColoring(HWND);
 
 #endif WINDOWSMANAGER_H
 
