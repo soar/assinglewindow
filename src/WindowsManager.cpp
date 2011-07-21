@@ -70,8 +70,8 @@ bool pluginIsAlreadyRunning()
 }
 
 /**
- * Ïîèñê îêíà â ñïèñêå
- * âîçâðàùàåòñÿ óêàçàòåëü íà ñòðóêòóðó ñ èíôîðìàöèåé
+ * ÐŸÐ¾Ð¸ÑÐº Ð¾ÐºÐ½Ð° Ð² ÑÐ¿Ð¸ÑÐºÐµ
+ * Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ÑÑ ÑƒÐºÐ°Ð·Ð°Ñ‚ÐµÐ»ÑŒ Ð½Ð° ÑÑ‚Ñ€ÑƒÐºÑ‚ÑƒÑ€Ñƒ Ñ Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸ÐµÐ¹
  */
 sWindowInfo* windowFind(HWND hWnd)
 {
@@ -84,8 +84,8 @@ sWindowInfo* windowFind(HWND hWnd)
 }
 
 /**
- * Ïîèñê îêíà â ñïèñêå
- * âîçâðàùàåòñÿ èòåðàòîð
+ * ÐŸÐ¾Ð¸ÑÐº Ð¾ÐºÐ½Ð° Ð² ÑÐ¿Ð¸ÑÐºÐµ
+ * Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ÑÑ Ð¸Ñ‚ÐµÑ€Ð°Ñ‚Ð¾Ñ€
  */
 windowsList::iterator windowFindItr(HWND hWnd)
 {
@@ -98,8 +98,8 @@ windowsList::iterator windowFindItr(HWND hWnd)
 }
 
 /**
- * Ïîèñê îêíà â ñïèñêå
- * âîçâðàùàåòñÿ ðåâåðñíûé èòåðàòîð
+ * ÐŸÐ¾Ð¸ÑÐº Ð¾ÐºÐ½Ð° Ð² ÑÐ¿Ð¸ÑÐºÐµ
+ * Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ÑÑ Ñ€ÐµÐ²ÐµÑ€ÑÐ½Ñ‹Ð¹ Ð¸Ñ‚ÐµÑ€Ð°Ñ‚Ð¾Ñ€
  */
 windowsList::reverse_iterator windowFindRevItr(HWND hWnd)
 {
@@ -112,8 +112,8 @@ windowsList::reverse_iterator windowFindRevItr(HWND hWnd)
 }
 
 /**
- * Äîáàâëåíèå îêíà â ñïèñîê îêîí è âûñòàâëåíèå âñåõ íà÷àëüíûõ çíà÷åíèé
- * çäåñü æå âûñòàâëÿåòñÿ õóê íà wndProc
+ * Ð”Ð¾Ð±Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð¾ÐºÐ½Ð° Ð² ÑÐ¿Ð¸ÑÐ¾Ðº Ð¾ÐºÐ¾Ð½ Ð¸ Ð²Ñ‹ÑÑ‚Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð²ÑÐµÑ… Ð½Ð°Ñ‡Ð°Ð»ÑŒÐ½Ñ‹Ñ… Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ð¹
+ * Ð·Ð´ÐµÑÑŒ Ð¶Ðµ Ð²Ñ‹ÑÑ‚Ð°Ð²Ð»ÑÐµÑ‚ÑÑ Ñ…ÑƒÐº Ð½Ð° wndProc
  */
 void windowAdd(HWND hWnd, bool IsMain)
 {
@@ -138,7 +138,7 @@ void windowAdd(HWND hWnd, bool IsMain)
 }
 
 /**
- * Óäàëåíèå îêíà èç ñïèñêà îêîí
+ * Ð£Ð´Ð°Ð»ÐµÐ½Ð¸Ðµ Ð¾ÐºÐ½Ð° Ð¸Ð· ÑÐ¿Ð¸ÑÐºÐ° Ð¾ÐºÐ¾Ð½
  */
 void windowRemove(HWND hWnd)
 {
@@ -148,7 +148,7 @@ void windowRemove(HWND hWnd)
 }
 
 /**
- * Ïîèñê îêíà âåðõíåãî óðîâíÿ
+ * ÐŸÐ¾Ð¸ÑÐº Ð¾ÐºÐ½Ð° Ð²ÐµÑ€Ñ…Ð½ÐµÐ³Ð¾ ÑƒÑ€Ð¾Ð²Ð½Ñ
  */
 HWND windowGetRoot(HWND hWnd)
 {
@@ -162,8 +162,8 @@ HWND windowGetRoot(HWND hWnd)
 }
 
 /**
- * Óñòàíîâêà ñòàðòîâûõ êîîðäèíàò è ðàçìåðà îêíà
- * áàçèðóåòñÿ íà îñíîâå êîîðäèíàò ïîñëåäíåãî îêíà â ñïèñêå
+ * Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° ÑÑ‚Ð°Ñ€Ñ‚Ð¾Ð²Ñ‹Ñ… ÐºÐ¾Ð¾Ñ€Ð´Ð¸Ð½Ð°Ñ‚ Ð¸ Ñ€Ð°Ð·Ð¼ÐµÑ€Ð° Ð¾ÐºÐ½Ð°
+ * Ð±Ð°Ð·Ð¸Ñ€ÑƒÐµÑ‚ÑÑ Ð½Ð° Ð¾ÑÐ½Ð¾Ð²Ðµ ÐºÐ¾Ð¾Ñ€Ð´Ð¸Ð½Ð°Ñ‚ Ð¿Ð¾ÑÐ»ÐµÐ´Ð½ÐµÐ³Ð¾ Ð¾ÐºÐ½Ð° Ð² ÑÐ¿Ð¸ÑÐºÐµ
  */
 void windowSetStartPosition(HWND hWnd)
 {
@@ -188,10 +188,10 @@ void windowSetStartPosition(HWND hWnd)
 }
 
 /**
- * Ïåðåìåùåíèå è ðåñàéç âñåõ îêîí ñïèñêà
- * hWnd - îêíî-èñòî÷íèê ñîáûòèÿ ïåðåìåùåíèÿ/ðåñàéçà
+ * ÐŸÐµÑ€ÐµÐ¼ÐµÑ‰ÐµÐ½Ð¸Ðµ Ð¸ Ñ€ÐµÑÐ°Ð¹Ð· Ð²ÑÐµÑ… Ð¾ÐºÐ¾Ð½ ÑÐ¿Ð¸ÑÐºÐ°
+ * hWnd - Ð¾ÐºÐ½Ð¾-Ð¸ÑÑ‚Ð¾Ñ‡Ð½Ð¸Ðº ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ñ Ð¿ÐµÑ€ÐµÐ¼ÐµÑ‰ÐµÐ½Ð¸Ñ/Ñ€ÐµÑÐ°Ð¹Ð·Ð°
  */
-void allWindowsMoveAndSizeWithBase(HWND hWnd)
+void allWindowsMoveAndSize(HWND hWnd)
 {
     if (pluginIsAlreadyRunning())
         return;
@@ -200,7 +200,7 @@ void allWindowsMoveAndSizeWithBase(HWND hWnd)
     RECT rWPC, rWPN;
     LONG cx, cy, cw, ch;
     
-    // Ïðîñìîòð îêîí îò òåêóùåãî äî êîíöà
+    // ÐŸÑ€Ð¾ÑÐ¼Ð¾Ñ‚Ñ€ Ð¾ÐºÐ¾Ð½ Ð¾Ñ‚ Ñ‚ÐµÐºÑƒÑ‰ÐµÐ³Ð¾ Ð´Ð¾ ÐºÐ¾Ð½Ñ†Ð°
     windowsList::iterator itrC = windowFindItr(hWnd);
     windowsList::iterator itrN = ++windowFindItr(hWnd);
     for (; itrC != pluginVars.allWindows.end(), itrN != pluginVars.allWindows.end(); itrC++, itrN++)
@@ -217,7 +217,7 @@ void allWindowsMoveAndSizeWithBase(HWND hWnd)
         itrN->saveRect();
     }
 
-    // Ïðîñìîòð îêîí îò òåêóùåãî äî íà÷àëà
+    // ÐŸÑ€Ð¾ÑÐ¼Ð¾Ñ‚Ñ€ Ð¾ÐºÐ¾Ð½ Ð¾Ñ‚ Ñ‚ÐµÐºÑƒÑ‰ÐµÐ³Ð¾ Ð´Ð¾ Ð½Ð°Ñ‡Ð°Ð»Ð°
     windowsList::reverse_iterator ritrC = windowFindRevItr(hWnd);
     windowsList::reverse_iterator ritrN = ++windowFindRevItr(hWnd);
     for (; ritrC != pluginVars.allWindows.rend(), ritrN != pluginVars.allWindows.rend(); ritrC++, ritrN++)
@@ -235,80 +235,6 @@ void allWindowsMoveAndSizeWithBase(HWND hWnd)
     }
 
     windowFind(hWnd)->saveRect();
-    pluginSetDone();
-}
-
-void allWindowsMoveAndSizeWithDiff(HWND hWnd)
-{
-    /*
-    RECT nWP;
-    LONG lastCalcPosition = 0;
-
-    //windowsList::iterator itrT = windowFindItr(hWnd);
-
-    windowsList::iterator itrC = pluginVars.allWindows.begin();
-    windowsList::iterator itrN = ++pluginVars.allWindows.begin();
-
-    for (; itrC != pluginVars.allWindows.end(), itrN != pluginVars.allWindows.end(); itrC++, itrN++)
-    {
-        //if (itrN->hWnd == hWnd)
-        //    continue;
-
-        if (calcNewWindowPosition(itrC->hWnd, itrN->hWnd, &nWP, WINDOW_POSITION_LEFT))
-            MoveWindow(itrN->hWnd, nWP.left, nWP.top, nWP.right - nWP.left, nWP.bottom - nWP.top, false);
-    }
-    */
-
-    if (pluginIsAlreadyRunning())
-        return;
-    pluginSetProgress();
-
-    LONG dl, dr, dt, db, dx;
-    RECT nWP;
-    sWindowInfo* wndInfo;
-    bool isNextWindowOnLeftSide;
-
-    switch (pluginVars.Options.DrivenWindowPos) {
-        case ASW_CLWINDOWPOS_RIGHT:
-            isNextWindowOnLeftSide = true;
-            break;
-        case ASW_CLWINDOWPOS_LEFT:
-            isNextWindowOnLeftSide = false;
-            break;
-    }
-
-    if ((! GetWindowRect(hWnd, &nWP)) || ! (wndInfo = windowFind(hWnd)))
-        return;
-
-    dl = nWP.left - wndInfo->rLastSavedPosition.left;
-    dr = nWP.right - wndInfo->rLastSavedPosition.right;
-    dt = nWP.top - wndInfo->rLastSavedPosition.top;
-    db = nWP.bottom - wndInfo->rLastSavedPosition.bottom;
-
-    wndInfo->saveRect();
-
-    windowsList::iterator itr;
-    for (itr = pluginVars.allWindows.begin(); itr != pluginVars.allWindows.end(); itr++)
-    {
-        if (itr->hWnd == hWnd)
-        {
-            isNextWindowOnLeftSide = ! isNextWindowOnLeftSide;
-            continue;
-        }
-
-        if (! GetWindowRect(itr->hWnd, &nWP))
-            continue;
-
-        if (isNextWindowOnLeftSide)
-            dx = dl;
-        else
-            dx = dr;
-        
-        //MoveWindow(itr->hWnd, nWP.left + dr, nWP.top + dt, nWP.right - nWP.left, nWP.bottom - nWP.top + db - dt, false);
-        SetWindowPos(itr->hWnd, wndInfo->hWnd, nWP.left + dx, nWP.top + dt, nWP.right - nWP.left, nWP.bottom - nWP.top + db - dt, SWP_NOACTIVATE);
-        itr->saveRect();
-    }
-
     pluginSetDone();
 }
 

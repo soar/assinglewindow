@@ -4,13 +4,12 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-// Файлы заголовков Windows:
+// Р¤Р°Р№Р»С‹ Р·Р°РіРѕР»РѕРІРєРѕРІ Windows:
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <CommCtrl.h>
-#include <map>
 #include <list>
 
 // Miranda headers

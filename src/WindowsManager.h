@@ -48,8 +48,7 @@ void windowSetStartPosition(HWND);
 
 // window callbacks
 LRESULT CALLBACK wndProcSync(HWND, UINT, WPARAM, LPARAM);
-void allWindowsMoveAndSizeWithDiff(HWND);
-void allWindowsMoveAndSizeWithBase(HWND);
+void allWindowsMoveAndSize(HWND);
 
 // debug
 LRESULT CALLBACK debugWndCallback(HWND, UINT, WPARAM, LPARAM);

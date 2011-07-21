@@ -14,9 +14,9 @@ PLUGININFOEX pluginInfo = {
     PLUGIN_MAKE_VERSION(0, 1, 0, 2),
     "Allow you work with contact-list and chat windows as with one single window.",
     "Aleksey Smyrnov aka Soar",
-    "to-me@soar.name",
-    "(c) 2010 http://soar.name",
-    "http://soar.name/",
+    "i@soar.name",
+    "(c) Soar, 2010-2011",
+    "http://soar.name/tag/assinglewindow/",
     UNICODE_AWARE,
     0,
 #ifdef _UNICODE
