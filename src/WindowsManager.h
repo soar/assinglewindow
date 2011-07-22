@@ -45,7 +45,7 @@ sWindowInfo* windowFind(HWND);
 void windowAdd(HWND, bool);
 void windowRemove(HWND);
 HWND windowGetRoot(HWND);
-void windowSetStartPosition(HWND);
+void windowReposition(HWND);
 
 // tools
 void calcNewWindowPosition(HWND, HWND, sWndCoords*, eWindowPosition);
