@@ -6,11 +6,11 @@
 #include "stdafx.h"
 
 enum WindowState {
-    WINDOW_STATE_NORMAL = 0,
-    WINDOW_STATE_MINIMIZED = 1,
-    WINDOW_STATE_MAXIMIZED = 2,
-    WINDOW_STATE_HIDDEN = 3,
-    WINDOW_STATE_CLOSED = 4, // not used ?
+    WINDOW_STATE_NORMAL,
+    WINDOW_STATE_MINIMIZED,
+    WINDOW_STATE_MAXIMIZED,
+    WINDOW_STATE_HIDDEN,
+    WINDOW_STATE_CLOSED, // not used ?
 };
 
 enum eWindowPosition {
@@ -43,17 +43,19 @@ sWindowInfo* windowFind(HWND);
 //windowsList::iterator windowFindItr(HWND);
 //windowsList::reverse_iterator windowFindRevItr(HWND);
 void windowAdd(HWND, bool);
-void windowRemove(HWND);
+//void windowRemove(HWND);
 HWND windowGetRoot(HWND);
+void windowListUpdate();
 void windowReposition(HWND);
 
 // tools
-void calcNewWindowPosition(HWND, HWND, sWndCoords*, eWindowPosition);
+bool calcNewWindowPosition(HWND, HWND, sWndCoords*, eWindowPosition);
 //LONG calcNewWindowPosition(HWND, HWND, RECT*, eWindowPosition);
 
 // window callbacks
 LRESULT CALLBACK wndProcSync(HWND, UINT, WPARAM, LPARAM);
 void allWindowsMoveAndSize(HWND);
+void allWindowsActivation(HWND);
 
 #endif WINDOWSMANAGER_H
 

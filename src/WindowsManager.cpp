@@ -144,8 +144,11 @@ void windowAdd(HWND hWnd, bool IsMain)
 /**
  * Удаление окна из списка окон
  */
+/*
 void windowRemove(HWND hWnd)
 {
+    hWnd = windowGetRoot(hWnd);
+
     windowsList::iterator itr = windowFindItr(hWnd);
     if (itr != pluginVars.allWindows.end())
     {
@@ -153,6 +156,7 @@ void windowRemove(HWND hWnd)
         pluginVars.allWindows.erase(itr);
     }
 }
+*/
 
 /**
  * Поиск окна верхнего уровня
@@ -168,48 +172,50 @@ HWND windowGetRoot(HWND hWnd)
     return hWnd;
 }
 
+void windowListUpdate()
+{
+    bool isRemoved = false;
+    windowsList::iterator itr = pluginVars.allWindows.begin();
+    while (itr != pluginVars.allWindows.end())
+        // Не удаляем КЛ впринципе, нет необходимости
+        if (! IsWindow(itr->hWnd) && itr->hWnd != pluginVars.contactListHWND)
+        {
+            if (itr->hWnd == pluginVars.contactListHWND)
+                pluginVars.contactListHWND = 0;
+            itr = pluginVars.allWindows.erase(itr);
+            isRemoved = true;
+        }
+        else
+            ++itr;
+
+    if (isRemoved)
+        if (! pluginVars.allWindows.empty())
+            // TODO: разобраться, почему после этого КЛ пропадает в трей
+            allWindowsMoveAndSize(pluginVars.contactListHWND);
+}
+
 /**
  * Установка стартовых координат и размера окна
  * базируется на основе координат другого окна в списке
  */
 void windowReposition(HWND hWnd)
 {
+    // TODO: Подумать, нужен ли тут hWnd вообще
     RECT prevWindowPos;
 
     hWnd = windowGetRoot(hWnd);    
 
+    // TODO: Проверить, возможно нужен выход из цикла
     if (sWindowInfo* wndInfo = windowFind(hWnd))
     {
-        for (windowsList::iterator itr = pluginVars.allWindows.begin(); itr != pluginVars.allWindows.end(); itr++)
-            if (itr->hWnd != hWnd)
+        for (windowsList::iterator itr = pluginVars.allWindows.begin(); itr != pluginVars.allWindows.end(); ++itr)
+            if (itr->hWnd != hWnd) // TODO: очень странная логика
                 if (GetWindowRect(itr->hWnd, &prevWindowPos))
+                {
                     SendMessage(itr->hWnd, WM_MOVE, 0, MAKELPARAM(prevWindowPos.left, prevWindowPos.top));
+                    break;
+                }
     }
-    /*
-    else
-    {
-        if (! GetWindowRect(hWnd, &srcWindowPos))
-            return;
-
-        windowsList::reverse_iterator ritr = pluginVars.allWindows.rbegin();
-
-        if (ritr == pluginVars.allWindows.rend())
-            return;
-
-        if (ritr->hWnd == hWnd)
-            ritr++;
-
-        if (! GetWindowRect(ritr->hWnd, &prevWindowPos)))
-            return;
-
-        LONG pw = srcWindowPos.right - srcWindowPos.left;
-        LONG ph = prevWindowPos.bottom - prevWindowPos.top;    
-        LONG px = prevWindowPos.left - pw;
-        LONG py = prevWindowPos.top;
-
-        SetWindowPos(hWnd, 0, px, py, pw, ph, SWP_NOZORDER);
-    }
-    */
 }
 
 /**
@@ -218,8 +224,9 @@ void windowReposition(HWND hWnd)
  */
 void allWindowsMoveAndSize(HWND hWnd)
 {
-    if (windowFind(hWnd)->eState != WINDOW_STATE_NORMAL)
-        return;
+    if (sWindowInfo* wndInfo = windowFind(hWnd))
+        if (wndInfo->eState != WINDOW_STATE_NORMAL)
+            return;
 
     if (pluginIsAlreadyRunning())
         return;
@@ -227,66 +234,114 @@ void allWindowsMoveAndSize(HWND hWnd)
 
     // Просмотр окон от текущего до конца
     windowsList::iterator itrC = windowFindItr(hWnd);
-    windowsList::iterator itrN = ++windowFindItr(hWnd);
-    for (; itrC != pluginVars.allWindows.end(), itrN != pluginVars.allWindows.end(); itrC++, itrN++)
+    if (itrC != pluginVars.allWindows.end())
     {
-        // itrC проверяется в начале функции
-        UINT incCount = 0;
-        bool isItrInList = true;
-        while (itrN->eState != WINDOW_STATE_NORMAL)
+        windowsList::iterator itrN = ++windowFindItr(hWnd);
+        for (; itrC != pluginVars.allWindows.end(), itrN != pluginVars.allWindows.end(); ++itrC, ++itrN)
         {
-            itrN++;
-            incCount++;
-            if (itrN == pluginVars.allWindows.end())
+            // itrC проверяется в начале функции
+            UINT incCount = 0;
+            bool isItrInList = true;
+            while (itrN->eState != WINDOW_STATE_NORMAL)
             {
-                isItrInList = false;
-                break;
+                ++itrN;
+                ++incCount;
+                if (itrN == pluginVars.allWindows.end())
+                {
+                    isItrInList = false;
+                    break;
+                }
             }
+            if (! isItrInList)
+                break;
+
+            sWndCoords wndCoord;
+            if (calcNewWindowPosition(itrC->hWnd, itrN->hWnd, &wndCoord, WINDOW_POSITION_RIGHT))
+                SetWindowPos(itrN->hWnd, itrC->hWnd, wndCoord.x, wndCoord.y, wndCoord.width, wndCoord.height, SWP_NOACTIVATE);
+
+            itrN->saveRect();
+
+            for (; incCount != 0; incCount--)
+                ++itrC;
         }
-        if (! isItrInList)
-            break;
-
-        sWndCoords wndCoord;
-        calcNewWindowPosition(itrC->hWnd, itrN->hWnd, &wndCoord, WINDOW_POSITION_RIGHT);
-        SetWindowPos(itrN->hWnd, itrC->hWnd, wndCoord.x, wndCoord.y, wndCoord.width, wndCoord.height, SWP_NOACTIVATE);
-
-        itrN->saveRect();
-
-        for (; incCount != 0; incCount--)
-            itrC++;
     }
 
     // Просмотр окон от текущего до начала
     windowsList::reverse_iterator ritrC = windowFindRevItr(hWnd);
-    windowsList::reverse_iterator ritrN = ++windowFindRevItr(hWnd);
-    for (; ritrC != pluginVars.allWindows.rend(), ritrN != pluginVars.allWindows.rend(); ritrC++, ritrN++)
+    if (ritrC != pluginVars.allWindows.rend())
     {
-        UINT incCount = 0;
-        bool isItrInList = true;
-        while (ritrN->eState != WINDOW_STATE_NORMAL)
+        windowsList::reverse_iterator ritrN = ++windowFindRevItr(hWnd);
+        for (; ritrC != pluginVars.allWindows.rend(), ritrN != pluginVars.allWindows.rend(); ++ritrC, ++ritrN)
         {
-            ritrN++;
-            incCount++;
-            if (ritrN == pluginVars.allWindows.rend())
+            UINT incCount = 0;
+            bool isItrInList = true;
+            while (ritrN->eState != WINDOW_STATE_NORMAL)
             {
-                isItrInList = false;
-                break;
+                ++ritrN;
+                ++incCount;
+                if (ritrN == pluginVars.allWindows.rend())
+                {
+                    isItrInList = false;
+                    break;
+                }
             }
+            if (! isItrInList)
+                break;
+
+            sWndCoords wndCoord;
+            if (calcNewWindowPosition(ritrC->hWnd, ritrN->hWnd, &wndCoord, WINDOW_POSITION_LEFT))
+                SetWindowPos(ritrN->hWnd, ritrC->hWnd, wndCoord.x, wndCoord.y, wndCoord.width, wndCoord.height, SWP_NOACTIVATE);
+
+            ritrN->saveRect();
+
+            for (; incCount != 0; incCount--)
+                ++ritrC;
         }
-        if (! isItrInList)
-            break;
-
-        sWndCoords wndCoord;
-        calcNewWindowPosition(ritrC->hWnd, ritrN->hWnd, &wndCoord, WINDOW_POSITION_LEFT);
-        SetWindowPos(ritrN->hWnd, ritrC->hWnd, wndCoord.x, wndCoord.y, wndCoord.width, wndCoord.height, SWP_NOACTIVATE);
-
-        ritrN->saveRect();
-
-        for (; incCount != 0; incCount--)
-            ritrC++;
     }
 
-    windowFind(hWnd)->saveRect();
+    if (sWindowInfo* wndInfo = windowFind(hWnd))
+        wndInfo->saveRect();
+    pluginSetDone();
+}
+
+void allWindowsActivation(HWND hWnd)
+{
+    if (pluginIsAlreadyRunning())
+        return;
+    pluginSetProgress();
+
+    if (sWindowInfo* wndInfo = windowFind(hWnd))
+    {
+        WindowState wndState = wndInfo->eState;
+        for (windowsList::iterator itr = pluginVars.allWindows.begin(); itr != pluginVars.allWindows.end(); ++itr)
+        {
+            if (itr->hWnd == hWnd)
+                continue;
+
+            switch (wndState)
+            {
+                // Восстанавливаем все окна и выстаиваем на переднем плане
+                case WINDOW_STATE_NORMAL:
+                    ShowWindow(itr->hWnd, SW_SHOWNA);
+                    ShowWindow(itr->hWnd, SW_RESTORE);
+                    SetWindowPos(itr->hWnd, hWnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+                    break;
+                // Прячем окна диалогов, окно КЛ - скрываем
+                case WINDOW_STATE_MINIMIZED:
+                    if (itr->hWnd != pluginVars.contactListHWND)
+                        ShowWindow(itr->hWnd, SW_MINIMIZE);
+                    else
+                        ShowWindow(itr->hWnd, SW_HIDE);
+                    break;
+                // Прячем все окна
+                case WINDOW_STATE_HIDDEN:
+                case WINDOW_STATE_CLOSED:
+                    ShowWindow(itr->hWnd, SW_HIDE);
+                    break;
+            }
+        }
+    }
+
     pluginSetDone();
 }
 
@@ -306,51 +361,89 @@ void windowChangeState(HWND hWnd, WPARAM cmd, LPARAM cursorCoords)
                 break;
             case SC_MINIMIZE:
                 wndInfo->eState = WINDOW_STATE_MINIMIZED;
+                allWindowsActivation(hWnd);
                 break;
             case SC_RESTORE:
             case SC_MOVE:
             case SC_SIZE:
                 wndInfo->eState = WINDOW_STATE_NORMAL;
+                allWindowsActivation(hWnd);
+                windowReposition(hWnd);
                 break;
         }
     }
 }
 
+void windowChangeState(HWND hWnd, WindowState newState)
+{
+    if (sWindowInfo* wndInfo = windowFind(hWnd))
+    {
+        wndInfo->eState = newState;
+        switch (newState)
+        {
+            case WINDOW_STATE_NORMAL:
+            case WINDOW_STATE_HIDDEN:
+                allWindowsActivation(hWnd);
+                break;
+        }
+    }
+}
+
+void windowActivation(HWND hWnd, HWND prevhWnd)
+{
+    if (sWindowInfo* wndInfo = windowFind(prevhWnd))
+        return;
+
+    for (windowsList::iterator itr = pluginVars.allWindows.begin(); itr != pluginVars.allWindows.end(); ++itr)
+        if (itr->hWnd != hWnd)
+        {
+            if (itr->eState == WINDOW_STATE_MINIMIZED)
+                ShowWindow(itr->hWnd, SW_RESTORE);
+            SetWindowPos(itr->hWnd, hWnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        }
+}
+
 LRESULT CALLBACK wndProcSync(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    windowListUpdate();
+
     switch (msg)
     {
         case WM_SYSCOMMAND:
             windowChangeState(hWnd, wParam, lParam);
             break;
         case WM_SIZE:
-            //if (wParam == SIZE_RESTORED)
-                allWindowsMoveAndSize(hWnd);
+            allWindowsMoveAndSize(hWnd);
             break;
         case WM_MOVE:
             allWindowsMoveAndSize(hWnd);
             break;
         case WM_SHOWWINDOW:
+            windowChangeState(hWnd, wParam ? WINDOW_STATE_NORMAL : WINDOW_STATE_HIDDEN);
+            allWindowsMoveAndSize(hWnd);
             break;
+        case WM_ACTIVATE:
+            if (wParam)
+                windowActivation(hWnd, (HWND) lParam);
+            break;
+        //case WM_ACTIVATEAPP:
+        //    if (wParam)
+        //        windowChangeState(hWnd, true);
+        //    break;
     }
 
     if (sWindowInfo* wndInfo = windowFind(hWnd))
-    {
-        // closing - not realy closes
-        //if (wndInfo->eState == WINDOW_STATE_CLOSED)
-        //    windowRemove(hWnd);
         return CallWindowProc(wndInfo->pPrevWndProc, hWnd, msg, wParam, lParam);
-    }
     else
         return 0;
 }
 
-void calcNewWindowPosition(HWND hWndLeading, HWND hWndDriven, sWndCoords* wndCoord, eWindowPosition wndPos)
+bool calcNewWindowPosition(HWND hWndLeading, HWND hWndDriven, sWndCoords* wndCoord, eWindowPosition wndPos)
 {
     RECT rWndLeading, rWndDriven;
 
     if (! GetWindowRect(hWndLeading, &rWndLeading) || ! GetWindowRect(hWndDriven, &rWndDriven))
-        return;
+        return false;
 
     wndCoord->width = rWndDriven.right - rWndDriven.left;
     wndCoord->height = rWndLeading.bottom - rWndLeading.top;
@@ -359,6 +452,8 @@ void calcNewWindowPosition(HWND hWndLeading, HWND hWndDriven, sWndCoords* wndCoo
         wndCoord->x = rWndLeading.left - wndCoord->width;
     else if (wndPos == WINDOW_POSITION_LEFT)
         wndCoord->x = rWndLeading.right;
+
+    return true;
 }
 
 // end of file

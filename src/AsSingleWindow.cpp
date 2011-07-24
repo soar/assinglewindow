@@ -99,8 +99,12 @@ int MsgWindowEvent(WPARAM wParam, LPARAM lParam)
         case MSG_WINDOW_EVT_OPEN:
             windowAdd(data->hwndWindow, false);            
             break;
-        case MSG_WINDOW_EVT_CLOSING:
-            windowRemove(data->hwndWindow);
+        // Не здесь ! Может быть закрытием дочернего окна
+        case MSG_WINDOW_EVT_CLOSE:
+            if (IsWindow(data->hwndWindow))
+                UINT i = 1;
+            else
+                UINT i = 2;
             break;
     }
 
