@@ -11,6 +11,7 @@
 #include <iostream>
 #include <CommCtrl.h>
 #include <list>
+#include <algorithm>
 
 // Miranda headers
 #include "..\include\newpluginapi.h"

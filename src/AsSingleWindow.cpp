@@ -7,12 +7,12 @@ PLUGINLINK *pluginLink;
 PLUGININFOEX pluginInfo = {
     sizeof(pluginInfo), // PLUGININFOEX
 #ifdef _UNICODE
-    "AsSingleWindow Mode Plugin (Unicode)",
+    "AsSingleWindow (Unicode)",
 #else
-    "AsSingleWindow Mode Plugin",
+    "AsSingleWindow",
 #endif
-    PLUGIN_MAKE_VERSION(0, 1, 0, 2),
-    "Allow you work with contact-list and chat windows as with one single window.",
+    PLUGIN_MAKE_VERSION(0, 1, 2, 1),
+    "Makes easier windows manipulation: allows you to move, minimize and activate Miranda's windows as if it were a single window.",
     "Aleksey Smyrnov aka Soar",
     "i@soar.name",
     "(c) Soar, 2010-2011",
@@ -96,15 +96,10 @@ int MsgWindowEvent(WPARAM wParam, LPARAM lParam)
 
     switch (data->uType)
     {
+        // Здесь можно отлавливать только открытие окна,
+        // т.к. закрытие может быть закрытием вкладки
         case MSG_WINDOW_EVT_OPEN:
             windowAdd(data->hwndWindow, false);            
-            break;
-        // Не здесь ! Может быть закрытием дочернего окна
-        case MSG_WINDOW_EVT_CLOSE:
-            if (IsWindow(data->hwndWindow))
-                UINT i = 1;
-            else
-                UINT i = 2;
             break;
     }
 

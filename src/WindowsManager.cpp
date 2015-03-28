@@ -142,23 +142,6 @@ void windowAdd(HWND hWnd, bool IsMain)
 }
 
 /**
- * Удаление окна из списка окон
- */
-/*
-void windowRemove(HWND hWnd)
-{
-    hWnd = windowGetRoot(hWnd);
-
-    windowsList::iterator itr = windowFindItr(hWnd);
-    if (itr != pluginVars.allWindows.end())
-    {
-        SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) itr->pPrevWndProc);
-        pluginVars.allWindows.erase(itr);
-    }
-}
-*/
-
-/**
  * Поиск окна верхнего уровня
  */
 HWND windowGetRoot(HWND hWnd)
@@ -216,6 +199,12 @@ void windowReposition(HWND hWnd)
                     break;
                 }
     }
+    else if (! pluginVars.allWindows.empty())
+    {
+        windowsList::iterator itr = pluginVars.allWindows.begin();
+        if (GetWindowRect(itr->hWnd, &prevWindowPos))
+            SendMessage(itr->hWnd, WM_MOVE, 0, MAKELPARAM(prevWindowPos.left, prevWindowPos.top));
+    }
 }
 
 /**
@@ -224,13 +213,23 @@ void windowReposition(HWND hWnd)
  */
 void allWindowsMoveAndSize(HWND hWnd)
 {
+    // Если склеивание отключено
+    if (pluginVars.Options.DrivenWindowPos == ASW_CLWINDOWPOS_DISABLED)
+        return;
+
+    // Окно должно быть в списке и иметь нормальное состояние
     if (sWindowInfo* wndInfo = windowFind(hWnd))
+    {
         if (wndInfo->eState != WINDOW_STATE_NORMAL)
             return;
-
-    if (pluginIsAlreadyRunning())
+    }
+    else
         return;
-    pluginSetProgress();
+
+    // Отключаем связь, если окон больше двух и выбрана соотв. опция
+    if (pluginVars.Options.WindowsMerging == ASW_WINDOWS_MERGEDISABLE)
+        if (pluginVars.allWindows.size() > 2)
+            return;
 
     // Просмотр окон от текущего до конца
     windowsList::iterator itrC = windowFindItr(hWnd);
@@ -239,6 +238,11 @@ void allWindowsMoveAndSize(HWND hWnd)
         windowsList::iterator itrN = ++windowFindItr(hWnd);
         for (; itrC != pluginVars.allWindows.end(), itrN != pluginVars.allWindows.end(); ++itrC, ++itrN)
         {
+            // Режим только двух окон
+            if (pluginVars.Options.WindowsMerging == ASW_WINDOWS_MERGEONE)
+                if ((itrC->hWnd != pluginVars.contactListHWND) && (itrN->hWnd != pluginVars.contactListHWND))
+                    continue;
+
             // itrC проверяется в начале функции
             UINT incCount = 0;
             bool isItrInList = true;
@@ -256,7 +260,7 @@ void allWindowsMoveAndSize(HWND hWnd)
                 break;
 
             sWndCoords wndCoord;
-            if (calcNewWindowPosition(itrC->hWnd, itrN->hWnd, &wndCoord, WINDOW_POSITION_RIGHT))
+            if (calcNewWindowPosition(itrC->hWnd, itrN->hWnd, &wndCoord, (pluginVars.Options.DrivenWindowPos == ASW_CLWINDOWPOS_RIGHT) ? WINDOW_POSITION_RIGHT : WINDOW_POSITION_LEFT))
                 SetWindowPos(itrN->hWnd, itrC->hWnd, wndCoord.x, wndCoord.y, wndCoord.width, wndCoord.height, SWP_NOACTIVATE);
 
             itrN->saveRect();
@@ -273,6 +277,11 @@ void allWindowsMoveAndSize(HWND hWnd)
         windowsList::reverse_iterator ritrN = ++windowFindRevItr(hWnd);
         for (; ritrC != pluginVars.allWindows.rend(), ritrN != pluginVars.allWindows.rend(); ++ritrC, ++ritrN)
         {
+            // Режим только двух окон
+            if (pluginVars.Options.WindowsMerging == ASW_WINDOWS_MERGEONE)
+                if ((ritrC->hWnd != pluginVars.contactListHWND) && (ritrN->hWnd != pluginVars.contactListHWND))
+                    continue;
+
             UINT incCount = 0;
             bool isItrInList = true;
             while (ritrN->eState != WINDOW_STATE_NORMAL)
@@ -289,7 +298,7 @@ void allWindowsMoveAndSize(HWND hWnd)
                 break;
 
             sWndCoords wndCoord;
-            if (calcNewWindowPosition(ritrC->hWnd, ritrN->hWnd, &wndCoord, WINDOW_POSITION_LEFT))
+            if (calcNewWindowPosition(ritrC->hWnd, ritrN->hWnd, &wndCoord, (pluginVars.Options.DrivenWindowPos == ASW_CLWINDOWPOS_RIGHT) ? WINDOW_POSITION_LEFT : WINDOW_POSITION_RIGHT))
                 SetWindowPos(ritrN->hWnd, ritrC->hWnd, wndCoord.x, wndCoord.y, wndCoord.width, wndCoord.height, SWP_NOACTIVATE);
 
             ritrN->saveRect();
@@ -301,15 +310,10 @@ void allWindowsMoveAndSize(HWND hWnd)
 
     if (sWindowInfo* wndInfo = windowFind(hWnd))
         wndInfo->saveRect();
-    pluginSetDone();
 }
 
 void allWindowsActivation(HWND hWnd)
 {
-    if (pluginIsAlreadyRunning())
-        return;
-    pluginSetProgress();
-
     if (sWindowInfo* wndInfo = windowFind(hWnd))
     {
         WindowState wndState = wndInfo->eState;
@@ -325,6 +329,7 @@ void allWindowsActivation(HWND hWnd)
                     ShowWindow(itr->hWnd, SW_SHOWNA);
                     ShowWindow(itr->hWnd, SW_RESTORE);
                     SetWindowPos(itr->hWnd, hWnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+                    itr->eState = WINDOW_STATE_NORMAL;
                     break;
                 // Прячем окна диалогов, окно КЛ - скрываем
                 case WINDOW_STATE_MINIMIZED:
@@ -332,17 +337,17 @@ void allWindowsActivation(HWND hWnd)
                         ShowWindow(itr->hWnd, SW_MINIMIZE);
                     else
                         ShowWindow(itr->hWnd, SW_HIDE);
+                    itr->eState = WINDOW_STATE_MINIMIZED;
                     break;
                 // Прячем все окна
                 case WINDOW_STATE_HIDDEN:
                 case WINDOW_STATE_CLOSED:
                     ShowWindow(itr->hWnd, SW_HIDE);
+                    itr->eState = WINDOW_STATE_HIDDEN;
                     break;
             }
         }
     }
-
-    pluginSetDone();
 }
 
 void windowChangeState(HWND hWnd, WPARAM cmd, LPARAM cursorCoords)
@@ -391,45 +396,71 @@ void windowChangeState(HWND hWnd, WindowState newState)
 
 void windowActivation(HWND hWnd, HWND prevhWnd)
 {
+    // Не активируем окно, если предыдущим активным было уже привязанное окно
     if (sWindowInfo* wndInfo = windowFind(prevhWnd))
         return;
+
+    // Почему-то этот код приводит к скукоживанию КЛа / двойному восстановлению
+    /*
+    hWnd = windowGetRoot(hWnd);
+    if (sWindowInfo* wndInfo = windowFind(hWnd))
+    {
+        if (wndInfo->eState == WINDOW_STATE_MINIMIZED)
+            ShowWindow(wndInfo->hWnd, SW_RESTORE);
+        if (wndInfo->eState == WINDOW_STATE_HIDDEN)
+            ShowWindow(wndInfo->hWnd, SW_SHOW);
+        wndInfo->eState = WINDOW_STATE_NORMAL;
+
+        allWindowsActivation(hWnd);
+    }
+    */
 
     for (windowsList::iterator itr = pluginVars.allWindows.begin(); itr != pluginVars.allWindows.end(); ++itr)
         if (itr->hWnd != hWnd)
         {
             if (itr->eState == WINDOW_STATE_MINIMIZED)
+            {
                 ShowWindow(itr->hWnd, SW_RESTORE);
+                // itr->eState = WINDOW_STATE_NORMAL; - ведет к глюкам
+            }
             SetWindowPos(itr->hWnd, hWnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
         }
 }
 
 LRESULT CALLBACK wndProcSync(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    windowListUpdate();
-
-    switch (msg)
+    if (! pluginIsAlreadyRunning())
     {
-        case WM_SYSCOMMAND:
-            windowChangeState(hWnd, wParam, lParam);
-            break;
-        case WM_SIZE:
-            allWindowsMoveAndSize(hWnd);
-            break;
-        case WM_MOVE:
-            allWindowsMoveAndSize(hWnd);
-            break;
-        case WM_SHOWWINDOW:
-            windowChangeState(hWnd, wParam ? WINDOW_STATE_NORMAL : WINDOW_STATE_HIDDEN);
-            allWindowsMoveAndSize(hWnd);
-            break;
-        case WM_ACTIVATE:
-            if (wParam)
-                windowActivation(hWnd, (HWND) lParam);
-            break;
-        //case WM_ACTIVATEAPP:
-        //    if (wParam)
-        //        windowChangeState(hWnd, true);
-        //    break;
+        pluginSetProgress();
+
+        windowListUpdate();
+
+        switch (msg)
+        {
+            case WM_SYSCOMMAND:
+                windowChangeState(hWnd, wParam, lParam);
+                break;
+            case WM_SIZE:
+                allWindowsMoveAndSize(hWnd);
+                break;
+            case WM_MOVE:
+                allWindowsMoveAndSize(hWnd);
+                break;
+            case WM_SHOWWINDOW:
+                windowChangeState(hWnd, wParam ? WINDOW_STATE_NORMAL : WINDOW_STATE_HIDDEN);
+                allWindowsMoveAndSize(hWnd);
+                break;
+            case WM_ACTIVATE:
+                if (wParam)
+                    windowActivation(hWnd, (HWND) lParam);
+                break;
+            //case WM_ACTIVATEAPP:
+            //    if (! wParam)
+            //        windowActivation(hWnd, 0);
+            //    break;
+        }
+
+        pluginSetDone();
     }
 
     if (sWindowInfo* wndInfo = windowFind(hWnd))

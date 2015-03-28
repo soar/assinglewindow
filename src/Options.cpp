@@ -44,6 +44,7 @@ INT_PTR CALLBACK cbOptionsDialog(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
                     case PSN_APPLY:
                         optionsUpdate(hWnd);
                         optionsSave();
+                        windowReposition(hWnd); // Инициируем перерасчет координат
                         break;
                 }
             }
@@ -86,6 +87,13 @@ void dlgProcessCommand(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 dlgUpdateControls(hWnd);
                 SendMessage(GetParent(hWnd), PSM_CHANGED, 0, 0);
             }
+            break;
+        case IDC_RADIO_G2_MERGEALL:
+        case IDC_RADIO_G2_MERGEONE:
+        case IDC_RADIO_G2_DISABLEMERGE:
+            if (idNotifyCode == BN_CLICKED)
+                SendMessage(GetParent(hWnd), PSM_CHANGED, 0, 0);
+            break;
     }
 }
 
